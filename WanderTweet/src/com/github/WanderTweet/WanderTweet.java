@@ -58,6 +58,25 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 		}
 	}
 
+	public void onInit(int arg0) {
+		// TODO Auto-generated method stub
+	
+	}
+
+	protected void onActivityResult(
+			int requestCode, int resultCode, Intent data) {
+		if (requestCode == CHECK_TTS_SUPPORTED) {
+			startOrInstallTextToSpeech(resultCode);
+		}
+	}
+
+	@Override
+	protected void onNewIntent(Intent intent) {
+		super.onNewIntent(intent);
+		Uri uri = intent.getData();
+		authenticateAndTest(uri);
+	}
+
 	private void setupTextToSpeech() {
 		Intent checkIntent = new Intent();
 		checkIntent
@@ -65,22 +84,19 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 		startActivityForResult(checkIntent, CHECK_TTS_SUPPORTED);
 	}
 
-	protected void onActivityResult(
-			int requestCode, int resultCode, Intent data) {
-		if (requestCode == CHECK_TTS_SUPPORTED) {
-			if (resultCode == TextToSpeech.Engine.CHECK_VOICE_DATA_PASS) {
-				// success, create the TTS instance
-				mTts = new TextToSpeech(this, this);
-				mTts.setLanguage(Locale.UK);
-				mTts.speak("Initial setup", TextToSpeech.QUEUE_ADD, null);
-
-			} else {
-				// missing data, install it
-				Intent installIntent = new Intent();
-				installIntent.setAction(
-					TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA);
-				startActivity(installIntent);
-			}
+	private void startOrInstallTextToSpeech(int resultCode) {
+		if (resultCode == TextToSpeech.Engine.CHECK_VOICE_DATA_PASS) {
+			// success, create the TTS instance
+			mTts = new TextToSpeech(this, this);
+			mTts.setLanguage(Locale.UK);
+			mTts.speak("Initial setup", TextToSpeech.QUEUE_ADD, null);
+	
+		} else {
+			// missing data, install it
+			Intent installIntent = new Intent();
+			installIntent.setAction(
+				TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA);
+			startActivity(installIntent);
 		}
 	}
 
@@ -88,22 +104,7 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 		mTts.speak(text, TextToSpeech.QUEUE_ADD, null);
 	}
 
-	private TextToSpeech mTts;
-
-
-	private static final int CHECK_TTS_SUPPORTED = 0;
-
-
-	private Twitter twitter;
-
-
-	private RequestToken requestToken;
-	public void onInit(int arg0) {
-		// TODO Auto-generated method stub
-
-	}
-
-	public void testTwitter(){
+	private void testTwitter(){
 		TextView tv = (TextView)findViewById(R.id.textView1);
 		tv.setText("You hit the right Button!");
 		tv.invalidate();
@@ -112,7 +113,7 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 			twitter.setOAuthConsumer("QLPtTUqsMOHFvm362ML88A", "Rg4aeXYbiRVyg85dhiAKkvvQPojVTRAl315TjjFbU");
 			requestToken = twitter.getOAuthRequestToken("WanderTweet://connect");
 			startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(requestToken.getAuthorizationURL())));
-
+	
 		} catch (IllegalStateException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -125,13 +126,10 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 			tv.setText(errors.toString());
 			tv.invalidate();
 		}
-
+	
 	}
 
-	@Override
-	protected void onNewIntent(Intent intent) {
-		super.onNewIntent(intent);
-		Uri uri = intent.getData();
+	private void authenticateAndTest(Uri uri) {
 		TextView tv = (TextView)findViewById(R.id.textView1);
 		try {
 			String verifier = uri.getQueryParameter("oauth_verifier");
@@ -141,9 +139,9 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 			twitter.setOAuthAccessToken(accessToken);
 			String status = twitter.getScreenName();
 			String message = "You are logged into Twitter. Successfully got screen name: " + status ;
-
+	
 			speak(message);
-
+	
 			Query query = new Query("geocode:52.037313,-0.792046,0.5km");
 			QueryResult result = twitter.search(query);
 			String output = ""; 
@@ -160,5 +158,13 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 			tv.invalidate();
 		}
 	}
+
+	private TextToSpeech mTts;
+
+	private Twitter twitter;
+
+	private RequestToken requestToken;
+
+	private static final int CHECK_TTS_SUPPORTED = 0;
 
 }
