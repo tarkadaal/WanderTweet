@@ -15,7 +15,12 @@ import twitter4j.auth.RequestToken;
 import twitter4j.conf.ConfigurationBuilder;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.net.wifi.WifiConfiguration.Status;
 import android.os.Bundle;
@@ -38,6 +43,8 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 		addButton.setOnClickListener(this);		
 		View twitterButton = this.findViewById(R.id.twitter_button);
 		twitterButton.setOnClickListener(this);
+
+		setupLocationInformation();
 	}
 
 	public void onClick(View v) {
@@ -60,7 +67,7 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 
 	public void onInit(int arg0) {
 		// TODO Auto-generated method stub
-	
+
 	}
 
 	protected void onActivityResult(
@@ -90,7 +97,7 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 			mTts = new TextToSpeech(this, this);
 			mTts.setLanguage(Locale.UK);
 			mTts.speak("Initial setup", TextToSpeech.QUEUE_ADD, null);
-	
+
 		} else {
 			// missing data, install it
 			Intent installIntent = new Intent();
@@ -113,7 +120,7 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 			twitter.setOAuthConsumer("QLPtTUqsMOHFvm362ML88A", "Rg4aeXYbiRVyg85dhiAKkvvQPojVTRAl315TjjFbU");
 			requestToken = twitter.getOAuthRequestToken("WanderTweet://connect");
 			startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(requestToken.getAuthorizationURL())));
-	
+
 		} catch (IllegalStateException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -126,7 +133,7 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 			tv.setText(errors.toString());
 			tv.invalidate();
 		}
-	
+
 	}
 
 	private void authenticateAndTest(Uri uri) {
@@ -139,9 +146,9 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 			twitter.setOAuthAccessToken(accessToken);
 			String status = twitter.getScreenName();
 			String message = "You are logged into Twitter. Successfully got screen name: " + status ;
-	
+
 			speak(message);
-	
+
 			Query query = new Query("geocode:52.037313,-0.792046,0.5km");
 			QueryResult result = twitter.search(query);
 			String output = ""; 
@@ -161,7 +168,41 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 		}
 	}
 
+	private void setupLocationInformation() {
+		// Acquire a reference to the system Location Manager
+		LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+
+		// Define a listener that responds to location updates
+		LocationListener locationListener = new LocationListener() {
+			public void onLocationChanged(Location location) {
+				// Called when a new location is found by the network location provider.
+				makeUseOfNewLocation(location);
+			}
+
+			public void onStatusChanged(String provider, int status, Bundle extras) {}
+
+			public void onProviderEnabled(String provider) {}
+
+			public void onProviderDisabled(String provider) {}
+		};
+
+		// Register the listener with the Location Manager to receive location updates
+		Criteria criteria = new Criteria();
+		  criteria.setAccuracy(Criteria.ACCURACY_FINE);
+		  String provider = locationManager.getBestProvider(criteria, true);
+
+		locationManager.requestLocationUpdates(provider, 1000 * 60 * 10, 0, locationListener);
+
+	}
+
 	private TextToSpeech mTts;
+
+	private void makeUseOfNewLocation(Location location) {
+		// TODO Auto-generated method stub
+		TextView tv = (TextView)findViewById(R.id.textView1);
+		tv.setText(location.toString());
+		tv.invalidate();
+	}
 
 	private Twitter twitter;
 
