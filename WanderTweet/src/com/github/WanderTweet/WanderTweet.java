@@ -16,7 +16,9 @@ import twitter4j.auth.RequestToken;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningServiceInfo;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.location.Criteria;
 import android.location.Location;
@@ -29,18 +31,15 @@ import android.speech.tts.TextToSpeech.OnInitListener;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class WanderTweet extends Activity implements OnClickListener, OnInitListener{
+
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
-
-		Intent i = new Intent(this, WanderTweetService.class);
-		startService(i);
-
-		setupTextToSpeech();
 
 		View button = this.findViewById(R.id.speak_button);
 		button.setOnClickListener(this);		
@@ -49,7 +48,8 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 		button = this.findViewById(R.id.toggle_service_button);
 		button.setOnClickListener(this);
 
-		setupLocationInformation();
+		setupTextToSpeech();
+		//setupLocationInformation();
 	}
 
 	public void onClick(View v) {
@@ -60,7 +60,7 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 			}
 			else
 			{
-				speak(getString(R.string.text_to_speak));
+				mTts.speak(getString(R.string.text_to_speak), TextToSpeech.QUEUE_ADD, null);
 			}
 			break;
 
@@ -69,13 +69,7 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 			break;
 
 		case R.id.toggle_service_button:
-			Intent i = new Intent(this, WanderTweetService.class);
-			if(isMyServiceRunning())
-			{
-				stopService(i);}
-			else{ 
-				startService(i);
-			}
+			toggleService();
 			break;
 		}
 	}
@@ -88,7 +82,7 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 	protected void onActivityResult(
 			int requestCode, int resultCode, Intent data) {
 		if (requestCode == CHECK_TTS_SUPPORTED) {
-			startOrInstallTextToSpeech(resultCode);
+			installOrStartTextToSpeech(resultCode);
 		}
 	}
 
@@ -104,30 +98,42 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 	}
 
 	private void setupTextToSpeech() {
+		Toast.makeText(this, "Checking for Text To Speech packages...", 2000);
 		Intent checkIntent = new Intent();
 		checkIntent
 		.setAction(TextToSpeech.Engine.ACTION_CHECK_TTS_DATA);
 		startActivityForResult(checkIntent, CHECK_TTS_SUPPORTED);
 	}
 
-	private void startOrInstallTextToSpeech(int resultCode) {
-		if (resultCode == TextToSpeech.Engine.CHECK_VOICE_DATA_PASS) {
-			// success, create the TTS instance
-			mTts = new TextToSpeech(this, this);
-			mTts.setLanguage(Locale.UK);
-			mTts.speak("Initial setup", TextToSpeech.QUEUE_ADD, null);
-
-		} else {
+	private void installOrStartTextToSpeech(int resultCode) {
+		if (resultCode != TextToSpeech.Engine.CHECK_VOICE_DATA_PASS) {
 			// missing data, install it
 			Intent installIntent = new Intent();
 			installIntent.setAction(
 				TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA);
 			startActivity(installIntent);
+			finish();
+		} 			
+		else{
+			startTextToSpeech();
+			toggleService();
 		}
 	}
 
-	private void speak(String text) {
-		mTts.speak(text, TextToSpeech.QUEUE_ADD, null);
+	private void startTextToSpeech() {
+		mTts = new TextToSpeech(this, this);
+		mTts.setLanguage(Locale.UK);
+	}
+
+	private void toggleService() {
+		Intent i = new Intent(this, WanderTweetService.class);
+		WanderTweetService.TEXT_TO_SPEECH = mTts;
+		WanderTweetService.TWITTER = null;
+		if(isMyServiceRunning()){
+			stopService(i);}
+		else{ 
+			startService(i);
+		}
 	}
 
 	private void testTwitter(){
@@ -166,14 +172,14 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 			String status = twitter.getScreenName();
 			String message = "You are logged into Twitter. Successfully got screen name: " + status ;
 
-			speak(message);
+
 
 			Query query = new Query("geocode:52.037313,-0.792046,0.5km");
 			QueryResult result = twitter.search(query);
 			String output = ""; 
 			for (Tweet tweet : result.getTweets()) {
 				String tweetMessage = tweet.getFromUser() + ":" + tweet.getText() + "\n";
-				speak(tweetMessage);
+
 				output += tweetMessage;
 			}
 			tv.setText(output);
@@ -214,8 +220,6 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 
 	}
 
-	private TextToSpeech mTts;
-
 	private void makeUseOfNewLocation(Location location) {
 		// TODO Auto-generated method stub
 		TextView tv = (TextView)findViewById(R.id.textView1);
@@ -232,6 +236,8 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 		}
 		return false;
 	}
+
+	private TextToSpeech mTts;
 
 	private Twitter twitter;
 
