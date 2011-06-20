@@ -12,9 +12,10 @@ import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
 import twitter4j.auth.AccessToken;
 import twitter4j.auth.RequestToken;
-import twitter4j.conf.ConfigurationBuilder;
 
 import android.app.Activity;
+import android.app.ActivityManager;
+import android.app.ActivityManager.RunningServiceInfo;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Criteria;
@@ -22,7 +23,6 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.Uri;
-import android.net.wifi.WifiConfiguration.Status;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.TextToSpeech.OnInitListener;
@@ -37,12 +37,17 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 
+		Intent i = new Intent(this, WanderTweetService.class);
+		startService(i);
+
 		setupTextToSpeech();
 
-		View addButton = this.findViewById(R.id.speak_button);
-		addButton.setOnClickListener(this);		
-		View twitterButton = this.findViewById(R.id.twitter_button);
-		twitterButton.setOnClickListener(this);
+		View button = this.findViewById(R.id.speak_button);
+		button.setOnClickListener(this);		
+		button = this.findViewById(R.id.twitter_button);
+		button.setOnClickListener(this);
+		button = this.findViewById(R.id.toggle_service_button);
+		button.setOnClickListener(this);
 
 		setupLocationInformation();
 	}
@@ -62,6 +67,16 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 		case R.id.twitter_button:
 			testTwitter();
 			break;
+
+		case R.id.toggle_service_button:
+			Intent i = new Intent(this, WanderTweetService.class);
+			if(isMyServiceRunning())
+			{
+				stopService(i);}
+			else{ 
+				startService(i);
+			}
+			break;
 		}
 	}
 
@@ -80,8 +95,12 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 	@Override
 	protected void onNewIntent(Intent intent) {
 		super.onNewIntent(intent);
-		Uri uri = intent.getData();
-		authenticateAndTest(uri);
+		String s = intent.getAction();
+		if(s!=null && s.equals("android.intent.action.VIEW"))
+		{
+			Uri uri = intent.getData();
+			authenticateAndTest(uri);
+		}
 	}
 
 	private void setupTextToSpeech() {
@@ -188,8 +207,8 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 
 		// Register the listener with the Location Manager to receive location updates
 		Criteria criteria = new Criteria();
-		  criteria.setAccuracy(Criteria.ACCURACY_FINE);
-		  String provider = locationManager.getBestProvider(criteria, true);
+		criteria.setAccuracy(Criteria.ACCURACY_FINE);
+		String provider = locationManager.getBestProvider(criteria, true);
 
 		locationManager.requestLocationUpdates(provider, 1000 * 60 * 10, 0, locationListener);
 
@@ -202,6 +221,16 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 		TextView tv = (TextView)findViewById(R.id.textView1);
 		tv.setText(location.toString());
 		tv.invalidate();
+	}
+
+	private boolean isMyServiceRunning() {
+		ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+		for (RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+			if ("com.github.WanderTweet.WanderTweetService".equals(service.service.getClassName())) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private Twitter twitter;

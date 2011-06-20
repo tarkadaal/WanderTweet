@@ -37,6 +37,6 @@
 					android:host="connect" />
 			</intent-filter>
 		</activity>
-
+		<service android:name=".WanderTweetService" />
 	</application>
 </manifest>
