@@ -34,7 +34,8 @@ public class WanderTweetService extends Service {
         mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
 
         // Display a notification about us starting.  We put an icon in the status bar.
-        showNotification();
+        CharSequence text = getText(R.string.local_service_started);
+        showNotification(text);
     }
 
     @Override
@@ -66,18 +67,20 @@ public class WanderTweetService extends Service {
     /**
      * Show a notification while this service is running.
      */
-    private void showNotification() {
+    private void showNotification(CharSequence text) {
         // In this sample, we'll use the same text for the ticker and the expanded notification
-        CharSequence text = getText(R.string.local_service_started);
+
 
         // Set the icon, scrolling text and timestamp
         Notification notification = new Notification(R.drawable.icon, text,
                 System.currentTimeMillis());
 
+        
         // The PendingIntent to launch our activity if the user selects this notification
         PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
                 new Intent(this, WanderTweet.class), 0);
 
+        
         // Set the info for the views that show in the notification panel.
         notification.setLatestEventInfo(this, getText(R.string.local_service_label),
                        text, contentIntent);
