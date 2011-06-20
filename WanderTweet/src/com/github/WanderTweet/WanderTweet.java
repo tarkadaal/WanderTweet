@@ -146,7 +146,9 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 			QueryResult result = twitter.search(query);
 			String output = ""; 
 			for (Tweet tweet : result.getTweets()) {
-				output += tweet.getFromUser() + ":" + tweet.getText() + "\n";
+				String tweetMessage = tweet.getFromUser() + ":" + tweet.getText() + "\n";
+				speak(tweetMessage);
+				output += tweetMessage;
 			}
 			tv.setText(output);
 			tv.invalidate();
