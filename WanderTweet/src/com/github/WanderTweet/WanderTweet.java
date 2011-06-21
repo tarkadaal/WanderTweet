@@ -20,6 +20,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
@@ -49,7 +50,7 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 		button.setOnClickListener(this);
 
 		setupTextToSpeech();
-		//setupLocationInformation();
+		setupLocationInformation();
 	}
 
 	public void onClick(View v) {
@@ -93,7 +94,12 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 		if(s!=null && s.equals("android.intent.action.VIEW"))
 		{
 			Uri uri = intent.getData();
-			authenticateAndTest(uri);
+			try {
+				authenticateTwitter(uri);
+			} catch (TwitterException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -116,7 +122,7 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 		} 			
 		else{
 			startTextToSpeech();
-			toggleService();
+			startTwitterAuthentication();
 		}
 	}
 
@@ -128,7 +134,7 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 	private void toggleService() {
 		Intent i = new Intent(this, WanderTweetService.class);
 		WanderTweetService.TEXT_TO_SPEECH = mTts;
-		WanderTweetService.TWITTER = null;
+		WanderTweetService.TWITTER = mTwitter;
 		if(isMyServiceRunning()){
 			stopService(i);}
 		else{ 
@@ -136,14 +142,12 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 		}
 	}
 
-	private void testTwitter(){
+	private void startTwitterAuthentication() {
 		TextView tv = (TextView)findViewById(R.id.textView1);
-		tv.setText("You hit the right Button!");
-		tv.invalidate();
 		try {
-			twitter = new TwitterFactory().getInstance();
-			twitter.setOAuthConsumer("QLPtTUqsMOHFvm362ML88A", "Rg4aeXYbiRVyg85dhiAKkvvQPojVTRAl315TjjFbU");
-			requestToken = twitter.getOAuthRequestToken("WanderTweet://connect");
+			mTwitter = new TwitterFactory().getInstance();
+			mTwitter.setOAuthConsumer("QLPtTUqsMOHFvm362ML88A", "Rg4aeXYbiRVyg85dhiAKkvvQPojVTRAl315TjjFbU");
+			requestToken = mTwitter.getOAuthRequestToken("WanderTweet://connect");
 			startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(requestToken.getAuthorizationURL())));
 
 		} catch (IllegalStateException e) {
@@ -158,28 +162,30 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 			tv.setText(errors.toString());
 			tv.invalidate();
 		}
-
 	}
 
-	private void authenticateAndTest(Uri uri) {
+	private void authenticateTwitter(Uri uri) throws TwitterException {
+		String verifier = uri.getQueryParameter("oauth_verifier");
+		AccessToken accessToken = mTwitter.getOAuthAccessToken(requestToken, verifier);
+		String token = accessToken.getToken();
+		String secret = accessToken.getTokenSecret();
+		SharedPreferences preferences = getPreferences(MODE_PRIVATE);
+		SharedPreferences.Editor editor = preferences.edit();
+		editor.putString("accessToken", token);
+		editor.putString("accessSecret", secret);
+		editor.commit();
+		mTwitter.setOAuthAccessToken(accessToken);
+	}
+
+	private void testTwitter() {
 		TextView tv = (TextView)findViewById(R.id.textView1);
 		try {
-			String verifier = uri.getQueryParameter("oauth_verifier");
-			AccessToken accessToken = twitter.getOAuthAccessToken(requestToken, verifier);
-			String token = accessToken.getToken();
-			String secret = accessToken.getTokenSecret();
-			twitter.setOAuthAccessToken(accessToken);
-			String status = twitter.getScreenName();
-			String message = "You are logged into Twitter. Successfully got screen name: " + status ;
-
-
-
 			Query query = new Query("geocode:52.037313,-0.792046,0.5km");
-			QueryResult result = twitter.search(query);
+			QueryResult result = mTwitter.search(query);
 			String output = ""; 
 			for (Tweet tweet : result.getTweets()) {
 				String tweetMessage = tweet.getFromUser() + ":" + tweet.getText() + "\n";
-
+	
 				output += tweetMessage;
 			}
 			tv.setText(output);
@@ -239,7 +245,7 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 
 	private TextToSpeech mTts;
 
-	private Twitter twitter;
+	private Twitter mTwitter;
 
 	private RequestToken requestToken;
 

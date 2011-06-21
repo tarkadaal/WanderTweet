@@ -1,6 +1,10 @@
 package com.github.WanderTweet;
 
+import twitter4j.Query;
+import twitter4j.QueryResult;
+import twitter4j.Tweet;
 import twitter4j.Twitter;
+import twitter4j.TwitterException;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -34,30 +38,43 @@ public class WanderTweetService extends Service {
 			// Normally we would do some work here, like download a file.
 			// For our sample, we just sleep for 5 seconds.
 
-			Integer count = 0;
-			while(mContinue)
+			try{
+				Integer count = 0;
+				while(mContinue)
+				{
+					Query query = new Query("geocode:52.037313,-0.792046,0.5km");
+					QueryResult result;
+
+					result = TWITTER.search(query);
+
+
+					for (Tweet tweet : result.getTweets().subList(0, 9)) {
+						String tweetMessage = tweet.getFromUser() + ":" + tweet.getText() + "\n";
+						String message = "This is message number "	+ count.toString() + ".   " + tweetMessage;
+						TEXT_TO_SPEECH.speak(message, TextToSpeech.QUEUE_ADD, null);
+						TEXT_TO_SPEECH.playSilence(8000, TextToSpeech.QUEUE_ADD, null);
+						count++;
+					}
+
+					Thread.sleep(120000);
+
+				}}
+			catch(Exception e)
 			{
-				String message = "This is message number "	+ count.toString();
-				TEXT_TO_SPEECH.speak(message, TextToSpeech.QUEUE_ADD, null);
-				count++;
-				try {
-					Thread.sleep(5000);
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				e.printStackTrace();
+
 			}
-			
+
 			// Stop the service using the startId, so that we don't stop
 			// the service in the middle of handling another job
 			stopSelf(msg.arg1);
 		}
-		
+
 		public void stop()
 		{
 			mContinue=false;
 		}
-		
+
 		private Boolean mContinue = true;
 	}
 
@@ -98,7 +115,7 @@ public class WanderTweetService extends Service {
 		Log.i("LocalService", "Received start id " + startId + ": " + intent);
 
 		Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
-		
+
 		// For each start request, send a message to start a job and deliver the
 		// start ID so we know which request we're stopping when we finish the job
 		Message msg = mServiceHandler.obtainMessage();
