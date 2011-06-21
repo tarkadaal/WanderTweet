@@ -58,7 +58,8 @@ public class WanderTweetService extends Service {
 
 					Thread.sleep(120000);
 
-				}}
+				}
+			}
 			catch(Exception e)
 			{
 				e.printStackTrace();

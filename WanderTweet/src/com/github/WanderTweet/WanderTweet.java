@@ -147,9 +147,21 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 		try {
 			mTwitter = new TwitterFactory().getInstance();
 			mTwitter.setOAuthConsumer("QLPtTUqsMOHFvm362ML88A", "Rg4aeXYbiRVyg85dhiAKkvvQPojVTRAl315TjjFbU");
+			
+			SharedPreferences preferences = getPreferences(MODE_PRIVATE);
+			String accessToken = preferences.getString("accessToken", null);
+			String accessSecret = preferences.getString("accessSecret", null);
+			
+			if(accessToken != null && accessSecret != null)
+			{
+				AccessToken t = new AccessToken(accessToken, accessSecret);
+				mTwitter.setOAuthAccessToken(t);
+			}
+			else
+			{
 			requestToken = mTwitter.getOAuthRequestToken("WanderTweet://connect");
 			startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(requestToken.getAuthorizationURL())));
-
+			}
 		} catch (IllegalStateException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
