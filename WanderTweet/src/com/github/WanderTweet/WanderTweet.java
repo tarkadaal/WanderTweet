@@ -50,7 +50,6 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 		button.setOnClickListener(this);
 
 		setupTextToSpeech();
-		setupLocationInformation();
 	}
 
 	public void onClick(View v) {
@@ -209,40 +208,6 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 			tv.setText(errors.toString());
 			tv.invalidate();
 		}
-	}
-
-	private void setupLocationInformation() {
-		// Acquire a reference to the system Location Manager
-		LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-
-		// Define a listener that responds to location updates
-		LocationListener locationListener = new LocationListener() {
-			public void onLocationChanged(Location location) {
-				// Called when a new location is found by the network location provider.
-				makeUseOfNewLocation(location);
-			}
-
-			public void onStatusChanged(String provider, int status, Bundle extras) {}
-
-			public void onProviderEnabled(String provider) {}
-
-			public void onProviderDisabled(String provider) {}
-		};
-
-		// Register the listener with the Location Manager to receive location updates
-		Criteria criteria = new Criteria();
-		criteria.setAccuracy(Criteria.ACCURACY_FINE);
-		String provider = locationManager.getBestProvider(criteria, true);
-
-		locationManager.requestLocationUpdates(provider, 1000 * 60 * 10, 0, locationListener);
-
-	}
-
-	private void makeUseOfNewLocation(Location location) {
-		// TODO Auto-generated method stub
-		TextView tv = (TextView)findViewById(R.id.textView1);
-		tv.setText(location.toString());
-		tv.invalidate();
 	}
 
 	private boolean isMyServiceRunning() {

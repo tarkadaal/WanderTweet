@@ -1,5 +1,7 @@
 package com.github.WanderTweet;
 
+import java.util.List;
+
 import twitter4j.Query;
 import twitter4j.QueryResult;
 import twitter4j.Tweet;
@@ -9,8 +11,14 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Binder;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
@@ -18,6 +26,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
+import android.widget.TextView;
 import android.widget.Toast;
 
 
@@ -39,20 +48,30 @@ public class WanderTweetService extends Service {
 			// For our sample, we just sleep for 5 seconds.
 
 			try{
+				Thread.sleep(5000); //5 sec pause for the LocationListener to fire - can't be bothered doing it properly right at the minute.
 				Integer count = 0;
 				while(mContinue)
 				{
-					Query query = new Query("geocode:52.037313,-0.792046,0.5km");
+					String queryString = 
+						"geocode:" + 
+						mLocation.getLatitude() + 
+						"," + 
+						mLocation.getLongitude() + 
+						",0.5km";
+					Query query = new Query(queryString);
 					QueryResult result;
 
 					result = TWITTER.search(query);
 
-
-					for (Tweet tweet : result.getTweets().subList(0, 9)) {
+					List<Tweet> tweets = result.getTweets();
+					Integer size = tweets.size();
+					TEXT_TO_SPEECH.speak("Found " + size.toString() + " tweets." , TextToSpeech.QUEUE_ADD, null);
+					if(size > 0)
+					for (Tweet tweet : tweets.subList(0, size < 9 ? size : 9 )) {
 						String tweetMessage = tweet.getFromUser() + ":" + tweet.getText() + "\n";
 						String message = "This is message number "	+ count.toString() + ".   " + tweetMessage;
 						TEXT_TO_SPEECH.speak(message, TextToSpeech.QUEUE_ADD, null);
-						TEXT_TO_SPEECH.playSilence(8000, TextToSpeech.QUEUE_ADD, null);
+						TEXT_TO_SPEECH.playSilence(10000, TextToSpeech.QUEUE_ADD, null);
 						count++;
 					}
 
@@ -97,6 +116,8 @@ public class WanderTweetService extends Service {
 		// Display a notification about us starting.  We put an icon in the status bar.
 		CharSequence text = getText(R.string.local_service_started);
 		showNotification(text);
+		
+		setupLocationInformation();
 
 		// Start up the thread running the service.  Note that we create a
 		// separate thread because the service normally runs in the process's
@@ -169,6 +190,36 @@ public class WanderTweetService extends Service {
 		// Send the notification.
 		mNM.notify(NOTIFICATION, notification);
 	}
+	
+	private void setupLocationInformation() {
+		// Acquire a reference to the system Location Manager
+		LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+
+		// Define a listener that responds to location updates
+		LocationListener locationListener = new LocationListener() {
+			public void onLocationChanged(Location location) {
+				// Called when a new location is found by the network location provider.
+				makeUseOfNewLocation(location);
+			}
+
+			public void onStatusChanged(String provider, int status, Bundle extras) {}
+
+			public void onProviderEnabled(String provider) {}
+
+			public void onProviderDisabled(String provider) {}
+		};
+
+		// Register the listener with the Location Manager to receive location updates
+		Criteria criteria = new Criteria();
+		criteria.setAccuracy(Criteria.ACCURACY_FINE);
+		String provider = locationManager.getBestProvider(criteria, true);
+
+		locationManager.requestLocationUpdates(provider, 1000 * 60 * 10, 0, locationListener);
+	}
+
+	private void makeUseOfNewLocation(Location location) {
+		mLocation = location;
+	}
 
 	private NotificationManager mNM;
 
@@ -179,6 +230,8 @@ public class WanderTweetService extends Service {
 	// This is the object that receives interactions from clients.  See
 	// RemoteService for a more complete example.
 	private final IBinder mBinder = new LocalBinder();
+	
+	private Location mLocation = new Location("default");
 }
 
 
