@@ -214,7 +214,7 @@ public class WanderTweetService extends Service {
 		criteria.setAccuracy(Criteria.ACCURACY_FINE);
 		String provider = locationManager.getBestProvider(criteria, true);
 
-		locationManager.requestLocationUpdates(provider, 1000 * 60 * 10, 0, locationListener);
+		locationManager.requestLocationUpdates(provider, 1000 * 60 * 2, 0, locationListener);
 	}
 
 	private void makeUseOfNewLocation(Location location) {
