@@ -117,6 +117,7 @@ public class WanderTweetService extends Service {
 		CharSequence text = getText(R.string.local_service_started);
 		showNotification(text);
 		
+		setupForegroundStatus();
 		setupLocationInformation();
 
 		// Start up the thread running the service.  Note that we create a
@@ -166,6 +167,12 @@ public class WanderTweetService extends Service {
 		return mBinder;
 	}
 
+	private void setupForegroundStatus() {
+		// TODO Auto-generated method stub
+		Notification n = buildNotification("WanderTweet is running!");
+		startForeground(NOTIFICATION, n);
+	}
+
 	/**
 	 * Show a notification while this service is running.
 	 */
@@ -173,6 +180,13 @@ public class WanderTweetService extends Service {
 		// In this sample, we'll use the same text for the ticker and the expanded notification
 
 
+		Notification notification = buildNotification(text);
+
+		// Send the notification.
+		mNM.notify(NOTIFICATION, notification);
+	}
+
+	private Notification buildNotification(CharSequence text) {
 		// Set the icon, scrolling text and timestamp
 		Notification notification = new Notification(R.drawable.icon, text,
 			System.currentTimeMillis());
@@ -186,9 +200,7 @@ public class WanderTweetService extends Service {
 		// Set the info for the views that show in the notification panel.
 		notification.setLatestEventInfo(this, getText(R.string.local_service_label),
 			text, contentIntent);
-
-		// Send the notification.
-		mNM.notify(NOTIFICATION, notification);
+		return notification;
 	}
 	
 	private void setupLocationInformation() {
