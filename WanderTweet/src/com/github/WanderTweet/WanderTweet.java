@@ -132,8 +132,8 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 
 	private void toggleService() {
 		Intent i = new Intent(this, WanderTweetService.class);
-		WanderTweetService.TEXT_TO_SPEECH = mTts;
-		WanderTweetService.TWITTER = mTwitter;
+		SharedReferences.TEXT_TO_SPEECH = mTts;
+		SharedReferences.TWITTER = mTwitter;
 		if(isMyServiceRunning()){
 			stopService(i);}
 		else{ 

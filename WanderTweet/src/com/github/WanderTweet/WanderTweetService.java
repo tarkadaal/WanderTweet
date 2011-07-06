@@ -31,8 +31,6 @@ import android.widget.Toast;
 
 
 public class WanderTweetService extends Service {
-	public static TextToSpeech TEXT_TO_SPEECH;
-	public static Twitter TWITTER;
 	private Looper mServiceLooper;
 	private ServiceHandler mServiceHandler;
 
@@ -42,6 +40,7 @@ public class WanderTweetService extends Service {
 		public ServiceHandler(Looper looper) {
 			super(looper);
 		}
+		
 		@Override
 		public void handleMessage(Message msg) {
 			// Normally we would do some work here, like download a file.
@@ -61,17 +60,17 @@ public class WanderTweetService extends Service {
 					Query query = new Query(queryString);
 					QueryResult result;
 
-					result = TWITTER.search(query);
+					result = SharedReferences.TWITTER.search(query);
 
 					List<Tweet> tweets = result.getTweets();
 					Integer size = tweets.size();
-					TEXT_TO_SPEECH.speak("Found " + size.toString() + " tweets." , TextToSpeech.QUEUE_ADD, null);
+					SharedReferences.TEXT_TO_SPEECH.speak("Found " + size.toString() + " tweets." , TextToSpeech.QUEUE_ADD, null);
 					if(size > 0)
 					for (Tweet tweet : tweets.subList(0, size < 9 ? size : 9 )) {
 						String tweetMessage = tweet.getFromUser() + ":" + tweet.getText() + "\n";
 						String message = "This is message number "	+ count.toString() + ".   " + tweetMessage;
-						TEXT_TO_SPEECH.speak(message, TextToSpeech.QUEUE_ADD, null);
-						TEXT_TO_SPEECH.playSilence(10000, TextToSpeech.QUEUE_ADD, null);
+						SharedReferences.TEXT_TO_SPEECH.speak(message, TextToSpeech.QUEUE_ADD, null);
+						SharedReferences.TEXT_TO_SPEECH.playSilence(10000, TextToSpeech.QUEUE_ADD, null);
 						count++;
 					}
 
@@ -159,7 +158,7 @@ public class WanderTweetService extends Service {
 		// Tell the user we stopped.
 		Toast.makeText(this, R.string.local_service_stopped, Toast.LENGTH_SHORT).show();
 		mServiceHandler.stop();
-		TEXT_TO_SPEECH.stop();		
+		SharedReferences.TEXT_TO_SPEECH.stop();		
 	}
 
 	@Override
