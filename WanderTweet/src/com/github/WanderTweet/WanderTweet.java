@@ -42,11 +42,7 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 
-		View button = this.findViewById(R.id.speak_button);
-		button.setOnClickListener(this);		
-		button = this.findViewById(R.id.twitter_button);
-		button.setOnClickListener(this);
-		button = this.findViewById(R.id.toggle_service_button);
+		View button = this.findViewById(R.id.toggle_service_button);
 		button.setOnClickListener(this);
 
 		setupTextToSpeech();
@@ -54,19 +50,6 @@ public class WanderTweet extends Activity implements OnClickListener, OnInitList
 
 	public void onClick(View v) {
 		switch (v.getId()) {
-		case R.id.speak_button:
-			if (mTts == null) {
-				setupTextToSpeech();
-			}
-			else
-			{
-				mTts.speak(getString(R.string.text_to_speak), TextToSpeech.QUEUE_ADD, null);
-			}
-			break;
-
-		case R.id.twitter_button:
-			testTwitter();
-			break;
 
 		case R.id.toggle_service_button:
 			toggleService();

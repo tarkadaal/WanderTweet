@@ -179,6 +179,8 @@ public class WanderTweetService extends Service {
 	private Location mLocation = new Location("default");
 	private Looper mServiceLooper;
 	private ServiceHandler mServiceHandler;
+	
+	
 	// Handler that receives messages from the thread
 	private final class ServiceHandler extends Handler {
 	
@@ -196,30 +198,7 @@ public class WanderTweetService extends Service {
 				Integer count = 0;
 				while(mContinue)
 				{
-					String queryString = 
-						"geocode:" + 
-						mLocation.getLatitude() + 
-						"," + 
-						mLocation.getLongitude() + 
-						",0.5km";
-					Query query = new Query(queryString);
-					QueryResult result;
-	
-					result = SharedReferences.TWITTER.search(query);
-	
-					List<Tweet> tweets = result.getTweets();
-					Integer size = tweets.size();
-					SharedReferences.TEXT_TO_SPEECH.speak("Found " + size.toString() + " tweets." , TextToSpeech.QUEUE_ADD, null);
-					if(size > 0)
-					for (Tweet tweet : tweets.subList(0, size < 9 ? size : 9 )) {
-						String tweetMessage = tweet.getFromUser() + ":" + tweet.getText() + "\n";
-						String message = "This is message number "	+ count.toString() + ".   " + tweetMessage;
-						SharedReferences.TEXT_TO_SPEECH.speak(message, TextToSpeech.QUEUE_ADD, null);
-						SharedReferences.TEXT_TO_SPEECH.playSilence(10000, TextToSpeech.QUEUE_ADD, null);
-						count++;
-					}
-	
-					Thread.sleep(120000);
+					count = queryTwitterAndSpeakResults(count);
 	
 				}
 			}
@@ -233,12 +212,41 @@ public class WanderTweetService extends Service {
 			// the service in the middle of handling another job
 			stopSelf(msg.arg1);
 		}
-	
+
 		public void stop()
 		{
 			mContinue=false;
 		}
 	
+		private Integer queryTwitterAndSpeakResults(Integer count)
+				throws TwitterException, InterruptedException {
+			String queryString = 
+				"geocode:" + 
+				mLocation.getLatitude() + 
+				"," + 
+				mLocation.getLongitude() + 
+				",0.5km";
+			Query query = new Query(queryString);
+			QueryResult result;
+		
+			result = SharedReferences.TWITTER.search(query);
+		
+			List<Tweet> tweets = result.getTweets();
+			Integer size = tweets.size();
+			SharedReferences.TEXT_TO_SPEECH.speak("Found " + size.toString() + " tweets." , TextToSpeech.QUEUE_ADD, null);
+			if(size > 0)
+			for (Tweet tweet : tweets.subList(0, size < 9 ? size : 9 )) {
+				String tweetMessage = tweet.getFromUser() + ":" + tweet.getText() + "\n";
+				String message = "This is message number "	+ count.toString() + ".   " + tweetMessage;
+				SharedReferences.TEXT_TO_SPEECH.speak(message, TextToSpeech.QUEUE_ADD, null);
+				SharedReferences.TEXT_TO_SPEECH.playSilence(10000, TextToSpeech.QUEUE_ADD, null);
+				count++;
+			}
+		
+			Thread.sleep(120000);
+			return count;
+		}
+
 		private Boolean mContinue = true;
 	}
 }

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="hello">Hello World, WanderTweet!</string>
+    <string name="hello">Welcome To WanderTweet</string>
     <string name="app_name">WanderTweet</string>
     <string name="speak_button_text">Speak</string>
     <string name="text_to_speak">Hello, this is Android text to speech</string>
