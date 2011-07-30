@@ -31,72 +31,6 @@ import android.widget.Toast;
 
 
 public class WanderTweetService extends Service {
-	private Looper mServiceLooper;
-	private ServiceHandler mServiceHandler;
-
-	// Handler that receives messages from the thread
-	private final class ServiceHandler extends Handler {
-
-		public ServiceHandler(Looper looper) {
-			super(looper);
-		}
-		
-		@Override
-		public void handleMessage(Message msg) {
-			// Normally we would do some work here, like download a file.
-			// For our sample, we just sleep for 5 seconds.
-
-			try{
-				Thread.sleep(5000); //5 sec pause for the LocationListener to fire - can't be bothered doing it properly right at the minute.
-				Integer count = 0;
-				while(mContinue)
-				{
-					String queryString = 
-						"geocode:" + 
-						mLocation.getLatitude() + 
-						"," + 
-						mLocation.getLongitude() + 
-						",0.5km";
-					Query query = new Query(queryString);
-					QueryResult result;
-
-					result = SharedReferences.TWITTER.search(query);
-
-					List<Tweet> tweets = result.getTweets();
-					Integer size = tweets.size();
-					SharedReferences.TEXT_TO_SPEECH.speak("Found " + size.toString() + " tweets." , TextToSpeech.QUEUE_ADD, null);
-					if(size > 0)
-					for (Tweet tweet : tweets.subList(0, size < 9 ? size : 9 )) {
-						String tweetMessage = tweet.getFromUser() + ":" + tweet.getText() + "\n";
-						String message = "This is message number "	+ count.toString() + ".   " + tweetMessage;
-						SharedReferences.TEXT_TO_SPEECH.speak(message, TextToSpeech.QUEUE_ADD, null);
-						SharedReferences.TEXT_TO_SPEECH.playSilence(10000, TextToSpeech.QUEUE_ADD, null);
-						count++;
-					}
-
-					Thread.sleep(120000);
-
-				}
-			}
-			catch(Exception e)
-			{
-				e.printStackTrace();
-
-			}
-
-			// Stop the service using the startId, so that we don't stop
-			// the service in the middle of handling another job
-			stopSelf(msg.arg1);
-		}
-
-		public void stop()
-		{
-			mContinue=false;
-		}
-
-		private Boolean mContinue = true;
-	}
-
 	/**
 	 * Class for clients to access.  Because we know this service always
 	 * runs in the same process as its clients, we don't need to deal with
@@ -243,6 +177,70 @@ public class WanderTweetService extends Service {
 	private final IBinder mBinder = new LocalBinder();
 	
 	private Location mLocation = new Location("default");
+	private Looper mServiceLooper;
+	private ServiceHandler mServiceHandler;
+	// Handler that receives messages from the thread
+	private final class ServiceHandler extends Handler {
+	
+		public ServiceHandler(Looper looper) {
+			super(looper);
+		}
+		
+		@Override
+		public void handleMessage(Message msg) {
+			// Normally we would do some work here, like download a file.
+			// For our sample, we just sleep for 5 seconds.
+	
+			try{
+				Thread.sleep(5000); //5 sec pause for the LocationListener to fire - can't be bothered doing it properly right at the minute.
+				Integer count = 0;
+				while(mContinue)
+				{
+					String queryString = 
+						"geocode:" + 
+						mLocation.getLatitude() + 
+						"," + 
+						mLocation.getLongitude() + 
+						",0.5km";
+					Query query = new Query(queryString);
+					QueryResult result;
+	
+					result = SharedReferences.TWITTER.search(query);
+	
+					List<Tweet> tweets = result.getTweets();
+					Integer size = tweets.size();
+					SharedReferences.TEXT_TO_SPEECH.speak("Found " + size.toString() + " tweets." , TextToSpeech.QUEUE_ADD, null);
+					if(size > 0)
+					for (Tweet tweet : tweets.subList(0, size < 9 ? size : 9 )) {
+						String tweetMessage = tweet.getFromUser() + ":" + tweet.getText() + "\n";
+						String message = "This is message number "	+ count.toString() + ".   " + tweetMessage;
+						SharedReferences.TEXT_TO_SPEECH.speak(message, TextToSpeech.QUEUE_ADD, null);
+						SharedReferences.TEXT_TO_SPEECH.playSilence(10000, TextToSpeech.QUEUE_ADD, null);
+						count++;
+					}
+	
+					Thread.sleep(120000);
+	
+				}
+			}
+			catch(Exception e)
+			{
+				e.printStackTrace();
+	
+			}
+	
+			// Stop the service using the startId, so that we don't stop
+			// the service in the middle of handling another job
+			stopSelf(msg.arg1);
+		}
+	
+		public void stop()
+		{
+			mContinue=false;
+		}
+	
+		private Boolean mContinue = true;
+	}
 }
 
 
